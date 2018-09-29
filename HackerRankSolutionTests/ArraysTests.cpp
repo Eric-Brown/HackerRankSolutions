@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <iterator>
 #include <ctime>
+#include <fstream>
 #include <random>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -23,7 +25,7 @@ namespace HackerRankSolutionTests
 			return std::vector<int>{2, 5, 1, 3, 4 };
 		}
 		const std::string k_Chaotic_Msg{ "Too chaotic" };
-
+		const size_t k_Nums_Per_Query_Line{ 3 };
 	public:
 
 		TEST_METHOD(ArraysCanLeftRotate)
@@ -71,22 +73,6 @@ namespace HackerRankSolutionTests
 
 		TEST_METHOD(MinimumBribesCalculatesProblematicMinimum)
 		{
-			//1 2 5 3 7 8 6 4
-			//1 2 3 4 5 6 7 8
-			//0 0 2 -1 2 2 -1 -4
-
-			//foreach number, find first mismatch, calculate delta from original(?)
-
-			//1 2 5 3 7 8 6 4
-			//1 2 3 4 5 6 7 8
-			//1 2 5 3 4 6 7 8 -- 2
-				//5 moves up 2, other nodes are now -1 off before five and normal after 5
-			//1 2 5 3 7 4 6 8 -- 2
-				//7 moves up 2, 4 is -2 off, 6 is -1 off
-			//1 2 5 3 7 8 4 6 -- 2
-				//8 moves up 2, 4 is -3 off, 6 is -2 off
-			//1 2 5 3 7 8 6 4 -- 1
-				//6 moves up 1, 4 is -4 off
 			Arrays toTest;
 			std::vector<int> problemChild{ 1,2,5,3,7,8,6,4 };
 			Assert::IsTrue(toTest.minimumBribes(problemChild) == 7);
@@ -100,12 +86,6 @@ namespace HackerRankSolutionTests
 			Assert::IsTrue(toTest.minimumBribes(invalidQueue) < 0);
 		}
 
-		TEST_METHOD(MinimumBribeReturnsNegativeForMoreComplicatedQueue)
-		{
-			Arrays toTest;
-			std::vector<int> invalidLongQueue{ 2,5,1,3,4 };
-			Assert::IsTrue(toTest.minimumBribes(invalidLongQueue) < 0);
-		}
 
 		TEST_METHOD(MinimumBribesOutputsToGivenIterator)
 		{
@@ -118,7 +98,6 @@ namespace HackerRankSolutionTests
 			Assert::IsTrue(!result.empty());
 		}
 
-
 		TEST_METHOD(MinimumBribesOutputsChaoticMessageIfInvalid)
 		{
 			Arrays toTest;
@@ -129,6 +108,73 @@ namespace HackerRankSolutionTests
 			std::getline(stream, result);
 			Assert::IsTrue(!result.empty());
 			Assert::AreEqual(k_Chaotic_Msg, result);
+		}
+
+		TEST_METHOD(MinimumBribeReturnsNegativeForMoreComplicatedQueue)
+		{
+			Arrays toTest;
+			std::vector<int> invalidLongQueue{ 2,5,1,3,4 };
+			Assert::IsTrue(toTest.minimumBribes(invalidLongQueue) < 0);
+		}
+
+		TEST_METHOD(MinimumSwapsIsCorrect)
+		{
+			Arrays toTest;
+			std::vector<std::pair<std::vector<int>, int>> problemSolutionPairVector{
+				{{7,1,3,2,4,5,6} , 5},
+				{{4,3,1,2} , 3},
+				{{2,3,4,1,5} , 3},
+				{{1,3,5,2,4,6,8} , 3}
+			};
+			for each (std::pair<std::vector<int>,int> probSolPair in problemSolutionPairVector)
+			{
+				Assert::IsTrue(toTest.minimumSwaps(probSolPair.first) == probSolPair.second);
+			}
+		}
+
+		TEST_METHOD(MinimumSwapsHandlesZeroSwapSolutions)
+		{
+			Arrays toTest;
+			std::vector<int> easyZero{ 1,2,3,4,5 };
+			std::vector<int> harderishZero{ 90,1000,10000 };
+			Assert::IsTrue(toTest.minimumSwaps(easyZero) == 0);
+			Assert::IsTrue(toTest.minimumSwaps(harderishZero) == 0);
+		}
+
+		TEST_METHOD(ArrayManipulationIsCorrect)
+		{
+			Arrays toTest;
+			std::vector< std::pair< std::pair< size_t , std::vector< std::vector< int > > > , long> > argumentSolutionVector
+			{
+				{ {10, { {1,5,3}, {4,8,7}, {6,9,1} } }, 10},
+				{ {5, { {1,2,100}, {2,5,100}, {3,4,100} } }, 200}
+			};
+			for each (auto actualExpectedPair in argumentSolutionVector)
+			{
+				Assert::IsTrue(toTest.arrayManipulation(actualExpectedPair.first.first, actualExpectedPair.first.second) == actualExpectedPair.second);
+			}
+		}
+
+		TEST_METHOD(ArrayManipulationCanHandleLongQueries)
+		{
+			Arrays toTest;
+
+			//TODO: Do a relative path and not absolute
+			std::ifstream longQueryFile("c:\\Users\\alexa\\source\\repos\\HackerRankSolutions\\HackerRankSolutionTests\\LongTest.txt");
+			std::istream_iterator<int> queryFileIter{ longQueryFile };
+			int zeroVecSize = (*queryFileIter++);
+			std::vector<std::vector<int>> queries((*queryFileIter++));
+			std::generate(queries.begin(), queries.end(), 
+				[&queryFileIter]()->std::vector<int>
+			{
+				std::vector<int> queryLine(3);
+				std::generate(queryLine.begin(), queryLine.end(), [&queryFileIter]()->int
+				{
+					return (*queryFileIter++);
+				});
+				return queryLine;
+			});
+			Assert::IsTrue(toTest.arrayManipulation(zeroVecSize, queries) == 2510535321);
 		}
 
 	};
